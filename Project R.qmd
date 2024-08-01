@@ -1,0 +1,372 @@
+---
+title: "Suicidal Cases Explanatory Data Analysis"
+format: word
+toc: true
+editor: visual
+---
+
+{{< pagebreak >}}
+
+![](images/clipboard-358476272.png)
+
+{{< pagebreak >}}
+
+# Introduction
+
+Suicide is the act of intentionally causing one's own death. It is a complex and multifaceted issue that affects individuals of all ages, genders, and backgrounds. While the reasons behind suicide can vary widely, they often involve a combination of psychological, social, and environmental factors. Common contributing factors include mental health disorders such as depression, anxiety, and bipolar disorder, as well as experiences of trauma, abuse, bullying, and significant life stressors.
+
+While it is an individual act, its effects ripple through the lives of many, including family and friends. The regret and unanswered questions left behind can haunt those close to the deceased for a lifetime. They may struggle with the sorrow of not being able to help and the pain of losing someone they cared about deeply. This regret and emotional pain can be overwhelming and enduring.
+
+Suicide is a serious global public health issue. According to the World Health Organization (WHO), 703,000 people die by suicide every year. It is among the leading causes of death worldwide, with more fatalities due to suicide than malaria, HIV/AIDS, breast cancer, or war and homicide. In 2019, more than one in every 100 deaths (1.3%) were the result of suicide.
+
+Factors that affect the risk of suicide include mental disorders, drug misuse, psychological states, cultural, family, and social situations, genetics, experiences of trauma or loss, and nihilism. Mental disorders and substance misuse frequently co-exist. Other risk factors include having previously attempted suicide, the availability of means to take one's life, a family history of suicide, and the presence of traumatic brain injury. For example, suicide rates have been found to be higher in households with firearms than in those without them.
+
+{{< pagebreak >}}
+
+# Dataset
+
+To analyze suicide rates, I have utilized the dataset available on Kaggle titled "Suicide Rates EDA." This dataset provides a comprehensive collection of data on suicide rates across various countries and demographic groups over different years. It includes 27,822 rows and typically features the following 12 columns:
+
+-   **Country**: Name of the country
+
+-   **Year**: The year of the recorded data
+
+-   **Sex**: Gender of the individuals (male/female)
+
+-   **Age**: Age group of the individuals (e.g., 15-24 years, 25-34 years, etc.)
+
+-   **Suicides_no**: The number of suicides recorded
+
+-   **Population**: The population of the specified demographic group
+
+-   **Suicides/100k pop**: The number of suicides per 100,000 people
+
+-   **Country-year**: Combination of country and year
+
+-   **HDI for year**: Human Development Index for the year
+
+-   **GDP_for_year**: Gross Domestic Product for the year
+
+-   **GDP_per_capita**: GDP per capita
+
+-   **Generation**: The generation of the individuals (e.g., Boomers, Generation X, etc.
+
+    {{< pagebreak >}}
+
+# Summary of Data Set
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,  results='hide'}
+library(readr)
+library(readxl)
+
+library(stringr)
+library(dplyr)
+
+library(janitor)
+library(lubridate)
+library(ggplot2)
+library(ggshadow)
+library(gridExtra)
+dataset = read.csv("master.csv")
+str(dataset)
+
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE, results='hide'}
+dataset = dataset %>%
+  clean_names()
+str(dataset)
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE, results='hide'}
+colSums(is.na(dataset))
+data = dataset %>%
+  select(-hdi_for_year)
+View(data)
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE, results='hide'}
+colSums(is.na(data))
+
+data = data %>%
+  mutate(gdp_for_year = str_remove_all(gdp_for_year,"[,]")) %>%
+  mutate(gdp_for_year=as.numeric(gdp_for_year))
+str(data)
+View(data)
+summary(data)
+```
+
+-   The dataset spans multiple countries and years, providing a comprehensive overview of global suicide rates.
+
+-   It includes detailed breakdowns by sex, age, and generation, allowing for granular analysis.
+
+-   The dataset contains economic indicators like GDP and HDI, which can be used to explore the relationship between economic conditions and suicide rates.
+
+-   The column `suicides/100k pop` provides a normalized measure of suicides, which is useful for comparison across different populations and time periods.
+
+-   The average number of suicide cases during this period is 242.6.
+
+-   The population in the dataset ranges from a minimum of 278 to a maximum of 43,805,214.
+
+    {{< pagebreak >}}
+
+# Importance of Data Analysis
+
+Analyzing suicide rates with various factors plays a crucial role in preventing more cases. By examining the data, we can see the influence of factors such as country, age group, HDI, and GDP. This analysis helps determine the relative significance of these factors on suicide rates.
+
+By examining the data, we can gauge the extent of suicide as a public health issue. It helps in identifying trends over time, such as whether suicide rates are increasing, decreasing, or remaining stable globally or in specific regions.
+
+The dataset allows for a detailed analysis of suicide rates across different demographic groups, including age, gender, and generation. This helps in pinpointing which groups are most vulnerable and require targeted interventions.
+
+The dataset includes economic indicators like GDP and HDI, allowing for the analysis of the relationship between economic conditions and suicide rates. Understanding these correlations can help in designing economic policies that also consider mental health impacts.
+
+Analyzing the "Suicide Rates EDA" dataset is vital for a comprehensive understanding of suicide as a complex public health issue. It informs targeted interventions, shapes effective policies, enhances public awareness, and ultimately aims to reduce the global burden of suicide.
+
+{{< pagebreak >}}
+
+# Analysis of Suicidal Cases by Various Factors
+
+## Analysis of Suicidal Cases by Country
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+
+data1 <- data %>%
+  group_by(country) %>%
+  summarise(suicide_no = sum(suicides_no, na.rm = TRUE)) %>%
+  arrange(desc(suicide_no))
+data11 = head(data1)
+data12 = tail(data1)
+View(data11)
+ggplot(data11, aes(x = reorder(country, -suicide_no), y = suicide_no)) +
+  geom_bar(stat = "identity", fill = "#4A90E2", color = "black", width = 0.7) +  # Add black outline
+  geom_text(aes(label = suicide_no), vjust = -0.3, size = 3.5, angle = 45, hjust = 0, color = "black") +  # Position text outside
+  labs(
+    title = "Countries with the Highest Suicide Cases",
+    x = "Country",
+    y = "Number of Suicides"
+  ) +
+  geom_hline(yintercept = 0, color = "black") +
+  ylim(0, max(data11$suicide_no) * 1.2) +  
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),  # Centered and bold title
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, vjust = 1),  # Slightly larger x-axis labels
+    axis.text.y = element_text(size = 10),  # Consistent size for y-axis labels
+    axis.title.x = element_text(margin = margin(t = 10)),  # Add space between x-axis title and labels
+    axis.title.y = element_text(margin = margin(r = 10)),  # Add space between y-axis title and labels
+    axis.line = element_line(color = "black"),
+    panel.grid.major.y = element_line(color = "gray90"),  # Light grid lines for readability
+    panel.border = element_blank(),  # Remove plot box
+    plot.margin = margin(1, 1, 1, 1, "cm")  # Adjust plot margins
+  )
+```
+
+The Russian Federation, United States, Japan, and France are observed to have higher numbers of suicide cases, suggesting these nations might be facing significant factors contributing to elevated suicide rates. One potential factor is the neglect of the elderly, as traditional practices of children caring for their aging parents are diminishing in these countries. Additionally, young people in these nations might be increasingly losing hope and feeling incapable of seeking help, leading to higher suicide rates.
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+ggplot(data12, aes(x = reorder(country, -suicide_no), y = suicide_no)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  geom_text(aes(label = suicide_no), vjust = -0.5, size = 3.5, angle = 45, hjust = 0) +  # Add text labels on top of bars at 45-degree angle
+  labs(
+    title = "Country With less Suicidal Number",
+    x = "Country",
+    y = "Number of Suicides"
+  ) +
+  geom_hline(yintercept = 0, color = "black") +
+  ylim(0, max(data12$suicide_no) * 1.2) +  # Adjust y-axis limit to give more space
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(size = 8, angle = 45, hjust = 1),
+    axis.line = element_line(color = "black"),
+    panel.border = element_blank(),  # Remove plot box
+    plot.margin = unit(c(1, 1, 1, 1), "cm")  # Adjust plot margins
+  )
+```
+
+Dominica and Saint Kitts and Nevis are noted for having no reported suicidal cases. While this might suggest be due to strong community and family ties that provide a supportive network that can help individuals cope with stress and mental health issues. Cultural and religious influences, particularly Christianity, stigmatize suicide and may deter individuals from considering it. Additionally, underreporting due to stigma and lack of accurate reporting mechanisms can result in fewer documented cases. The island's natural environment and slower pace of life also contribute to lower stress levels and better mental health, further reducing the incidence of suicide.
+
+The stark contrast between countries with high and no reported suicidal cases underscores the diverse range of factors influencing suicide rates globally. This variation can be due to differences in socio-economic conditions, cultural attitudes towards mental health, availability of support services, and public health policies.
+
+{{< pagebreak >}}
+
+## Analysis of Suicidal Cases by Year
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+data2 <- data %>%
+  group_by(year) %>%
+  summarise(count = sum(suicides_no, na.rm = TRUE))
+
+ggplot(data2, aes(x = year, y = count)) +
+  geom_line(color = "green", size = 1) +   # Use a line plot
+  geom_point(color = "black", size = 2) +  # Optional: Add points to the line plot
+  labs(
+    title = "Yearly Trend of Suicides",
+    x = "Year",
+    y = "Number of Suicides"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+The bar plot highlights notable fluctuations in the number of suicidal cases across different years, with certain years recording significantly higher numbers while others show a marked decrease.
+
+The temporal fluctuations in suicide cases, as shown in the bar plot, can be attributed to various socio-economic and cultural factors. The peaks between 1999 and 2002 may correspond to significant global events such as the Asian financial crisis, the burst of the dot-com bubble, and socio-political changes, which led to economic downturns, job losses, and increased social stress. These factors likely exacerbated mental health issues, resulting in higher suicide rates.
+
+Conversely, the notable decline in 2016 might reflect the positive impacts of improved mental health awareness, better access to mental health care services, and stronger support systems. This period saw increased public health initiatives, economic recovery, and efforts to reduce the stigma surrounding mental health, all contributing to a reduction in suicide rates. Additionally, technological advancements and social media campaigns promoting mental health awareness may have played a role in encouraging individuals to seek help.
+
+The observed fluctuations in suicidal rates highlight the impact of various temporal factors on mental health. Such variations might be influenced by changes in socio-economic conditions, healthcare policies, cultural attitudes, or external events that affect mental well-being over time.
+
+{{< pagebreak >}}
+
+## Gender Disparity in Suicidal Cases
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+data3 <- data %>%
+  group_by(sex) %>%
+  summarise(count = sum(suicides_no))
+
+View(data3)
+
+ggplot(data3, aes(x = sex, y = count, fill = sex)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Gender Vs Suicidal Number",
+       x = "Gender",
+       y = "Number of Suicides") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "green"))
+```
+
+The data reveals a stark contrast in the number of suicidal cases between males and females, with males accounting for 5,188,910 cases compared to 1,559,510 cases for females. This vast difference highlights important considerations in understanding and addressing suicide rates across genders.
+
+Societal expectations and traditional masculine norms often pressure men to suppress their emotions and avoid seeking help for mental health issues. Men are also less likely to seek professional help due to stigma and fear of appearing weak. Additionally, men tend to use more lethal methods in suicide attempts, resulting in higher fatality rates. Higher rates of substance abuse among men can further exacerbate mental health problems, increasing the risk of suicide. Economic and social factors, such as financial pressures and social isolation, also play a significant role. Addressing these issues requires targeted interventions that promote mental health awareness, reduce stigma, and provide gender-specific support to effectively reduce suicide rates among men.
+
+{{< pagebreak >}}
+
+## Age Group Analysis of Suicidal Cases
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+data4 <- data %>%
+  group_by(age) %>%
+  summarise(count = sum(suicides_no)) %>%
+  arrange(age)
+
+data4$age <- factor(data4$age, levels = c("5-14", sort(unique(data4$age[data4$age != "5-14"]))))
+
+View(data4)
+
+
+ggplot(data4, aes(x = age, y = count)) +
+  geom_bar(stat = "identity", fill = "yellow") +
+  labs(
+    title = "Age Group Vs Suicidal Number",
+    x = "Age Group",
+    y = "Number of Suicides"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+The plot reveals significant variations in suicidal cases across different age groups, highlighting that people aged 35 to 54 are more likely to commit suicide, while a smaller number of children aged 5 to 14 have also attempted suicide. This data underscores the importance of addressing suicide prevention across all age groups, including young children.
+
+The higher rates among those aged 35 to 54 can be attributed to several factors, including midlife crises, increased financial pressures, and mental health issues that often arise during this life stage, such as depression and anxiety related to job loss, divorce, or the challenges of parenting.
+
+Additionally, the presence of suicide attempts among young children, though less frequent, is deeply concerning and suggests underlying issues such as bullying, family instability, or exposure to trauma. This underscores the critical need for early intervention strategies, mental health education, and supportive resources that can effectively address the unique challenges faced by different age groups.
+
+Comprehensive suicide prevention programs must recognize and respond to the distinct mental health needs of both adults and children to reduce the incidence of suicide across the lifespan.
+
+{{< pagebreak >}}
+
+## Generational Impact on Suicidal Cases
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+data5 = data %>%
+  group_by(generation) %>%
+  summarise(count=sum(suicides_no))
+View(data5)
+
+ggplot(data5, aes(x = generation, y = count)) +
+  geom_bar(stat = "identity", fill = "pink", color = "black") +
+  labs(
+    title = "Generation Vs Suicidal Number",
+    x = "Generation",
+    y = "Number of Suicides"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The data reveals that the generation an individual belongs to significantly affects the number of suicidal cases, with Boomers exhibiting higher rates of suicide, while Generation Z shows relatively lower rates. This disparity underscores the importance of understanding the distinct experiences and stressors faced by different generations to effectively address and prevent suicide.
+
+Boomers, who were born between 1946 and 1964, have experienced substantial economic and social changes throughout their lives, including economic recessions, changes in family structures, and shifts in societal expectations. These factors can contribute to increased stress and mental health issues.They are more likely to experience the loss of spouses, friends, and family members, which can result in profound grief and loneliness.
+
+The generational analysis of suicidal cases highlights that Boomers have higher rates of suicide, influenced by factors such as economic and social changes, health challenges, and social isolation. In contrast, Generation Z exhibits lower rates, benefiting from increased mental health awareness, digital connectivity, and proactive attitudes towards well-being. Understanding these generational differences is crucial for developing targeted suicide prevention strategies that address the unique needs and experiences of each generation. By fostering supportive environments, promoting mental health awareness, and providing accessible resources, we can work towards reducing suicide rates and improving mental health outcomes for all generations.
+
+{{< pagebreak >}}
+
+## The Relationship Between GDP and Suicide Rates
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+data6 <- data %>%
+  group_by(gdp_per_capita) %>%
+  summarise(count = sum(suicides_no, na.rm = TRUE)) %>%
+  arrange(gdp_per_capita)
+
+ggplot(data6, aes(x = gdp_per_capita, y = count)) +
+  geom_point(color = "red", size = 3) +  # Create a scatter plot with points
+  labs(
+    title = "GDP per Capita vs Number of Suicides",
+    x = "GDP per Capita",
+    y = "Number of Suicides"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5), # Center the plot title
+    axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels for readability
+  )
+```
+
+From the plot, we can conclude that countries with higher GDP tend to have lower suicide rates. This relationship can be attributed to several factors associated with economic stability. Higher GDP often correlates with better access to quality healthcare, including mental health services, which can effectively prevent and treat mental health issues that might lead to suicide. Wealthier countries also tend to have more robust social safety nets, including unemployment benefits, housing assistance, and other support programs that reduce the financial and social stresses contributing to suicidal behavior.
+
+Additionally, higher GDP is often linked to better education and awareness about mental health, reducing stigma and encouraging individuals to seek help. Economic stability can also lead to a higher quality of life, with more opportunities for personal and professional fulfillment, which can contribute to overall well-being. However, it is important to note that this is a general trend and there can be exceptions. Cultural, social, and individual factors also play significant roles in suicide rates, and some high-GDP countries may still experience high suicide rates due to other influencing factors.
+
+{{< pagebreak >}}
+
+# Conclusion
+
+Our exploratory analysis of the Kaggle dataset on global suicide rates reveals several critical insights into the patterns and trends associated with suicides across different countries, age groups, and genders.
+
+1.  **Global Trends**: We observed a general decline in global suicide rates over the analyzed period. However, certain regions and countries exhibit persistently high rates, indicating the need for targeted intervention strategies.
+
+2.  **Gender Disparities**: Consistent with existing literature, our analysis confirms that suicide rates are significantly higher among males compared to females across almost all countries. This gender disparity highlights the importance of addressing male-specific mental health issues and social pressures.
+
+3.  **Age Group Variations**: The analysis shows varying suicide rates across different age groups. While middle-aged individuals often show higher rates, the increasing rates among younger populations in certain regions are alarming and call for immediate preventive measures focused on youth mental health.
+
+4.  **Economic Factors**: Preliminary correlations suggest a potential link between economic instability (e.g., high unemployment rates) and increased suicide rates. This underscores the importance of economic support and job creation in suicide prevention efforts.
+
+5.  **Cultural and Social Influences**: Cultural and social factors appear to play a significant role in the observed differences in suicide rates across countries. Societal attitudes towards mental health, availability of support systems, and stigma surrounding suicide can significantly impact these rates.
+
+6.  **Methodological Limitations**: It is important to note the limitations in the dataset, including potential underreporting or misreporting of suicides and the lack of granular data on contributing factors such as mental health conditions, substance abuse, and access to mental health services.
+
+{{< pagebreak >}}
+
+### Recommendations
+
+Based on our findings, we recommend the following actions to better address and reduce suicide rates globally:
+
+-   **Strengthening Mental Health Services**: Increase funding and resources for mental health services, particularly in regions with high suicide rates.
+
+-   **Targeted Interventions**: Develop gender-specific and age-specific prevention programs to address the unique needs of different demographics.
+
+-   **Economic Support**: Implement policies that support economic stability, such as job creation and unemployment benefits, to mitigate economic stressors that may contribute to suicide.
+
+-   **Public Awareness Campaigns**: Promote public awareness about mental health and reduce stigma through education and advocacy.
+
+-   **Research and Data Collection**: Enhance data collection efforts to include more detailed information on contributing factors, enabling more comprehensive analyses and tailored interventions.
+
+By implementing these recommendations, we can work towards a more effective global strategy for reducing suicide rates and improving mental health outcomes.
